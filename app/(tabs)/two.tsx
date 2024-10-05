@@ -1,9 +1,9 @@
 import { StyleSheet, TextInput, FlatList, TouchableOpacity, View as RNView } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import React, { useState } from 'react';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Importing the FontAwesome icon set
-import { Dimensions } from 'react-native'; // Import Dimensions for responsive design
-import { BarChart } from 'react-native-chart-kit'; // Import BarChart from Chart Kit
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { Dimensions } from 'react-native';
+import { BarChart } from 'react-native-chart-kit';
 
 interface Crop {
   id: number;
@@ -11,35 +11,71 @@ interface Crop {
   successRate: number;
 }
 
+interface SoilDetail {
+  type: string;
+  moisture: number;
+  pH: number;
+  nutrients: string;
+}
+
+const soilDetails: { [key: string]: SoilDetail } = {
+  Rice: { type: 'Loamy', moisture: 20, pH: 6.5, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Wheat: { type: 'Sandy Loam', moisture: 15, pH: 6.0, nutrients: 'Nitrogen, Phosphorus' },
+  Corn: { type: 'Clay', moisture: 25, pH: 6.8, nutrients: 'Nitrogen, Phosphorus, Potassium, Calcium' },
+  Soybean: { type: 'Loam', moisture: 20, pH: 6.2, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Barley: { type: 'Sandy Loam', moisture: 18, pH: 6.5, nutrients: 'Phosphorus, Potassium' },
+  Oats: { type: 'Loam', moisture: 16, pH: 6.3, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Millet: { type: 'Sandy Loam', moisture: 14, pH: 6.5, nutrients: 'Phosphorus, Potassium' },
+  Sorghum: { type: 'Sandy', moisture: 18, pH: 6.0, nutrients: 'Phosphorus, Potassium' },
+  Cotton: { type: 'Loam', moisture: 16, pH: 6.8, nutrients: 'Nitrogen, Potassium' },
+  Sugarcane: { type: 'Clay Loam', moisture: 22, pH: 6.5, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Peanuts: { type: 'Sandy Loam', moisture: 18, pH: 6.0, nutrients: 'Phosphorus, Calcium' },
+  Potato: { type: 'Sandy', moisture: 20, pH: 5.5, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Tomato: { type: 'Loamy', moisture: 18, pH: 6.2, nutrients: 'Nitrogen, Phosphorus, Potassium' },
+  Carrot: { type: 'Sandy Loam', moisture: 16, pH: 6.0, nutrients: 'Phosphorus, Potassium' },
+  Onion: { type: 'Loamy', moisture: 15, pH: 6.2, nutrients: 'Phosphorus, Potassium' },
+};
+
 export default function TabTwoScreen() {
-  const [location, setLocation] = useState(''); // State for the location input
-  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null); // State for the selected crop
-  const [soilMoisture, setSoilMoisture] = useState<number | null>(null); // State for the soil moisture level
+  const [latitude, setLatitude] = useState(''); // State for latitude input
+  const [longitude, setLongitude] = useState(''); // State for longitude input
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
+  const [soilMoisture, setSoilMoisture] = useState<number | null>(null);
 
   const crops: Crop[] = [
     { id: 1, name: 'Rice', successRate: 85 },
     { id: 2, name: 'Wheat', successRate: 75 },
     { id: 3, name: 'Corn', successRate: 90 },
-    // Add more crops as needed
+    { id: 4, name: 'Soybean', successRate: 80 },
+  { id: 5, name: 'Barley', successRate: 70 },
+  { id: 6, name: 'Oats', successRate: 88 },
+  { id: 7, name: 'Millet', successRate: 65 },
+  { id: 8, name: 'Sorghum', successRate: 77 },
+  { id: 9, name: 'Cotton', successRate: 85 },
+  { id: 10, name: 'Sugarcane', successRate: 92 },
+  { id: 11, name: 'Peanuts', successRate: 81 },
+  { id: 12, name: 'Potato', successRate: 79 },
+  { id: 13, name: 'Tomato', successRate: 83 },
+  { id: 14, name: 'Carrot', successRate: 74 },
+  { id: 15, name: 'Onion', successRate: 78 }
   ];
 
-  // Function to simulate fetching soil moisture data
   const fetchSoilMoisture = () => {
-    const randomMoisture = Math.floor(Math.random() * 100); // Generate a random moisture level
-    setSoilMoisture(randomMoisture); // Update the state with the random moisture
-    alert(`Showing crops for ${location}`); // Alert the user with the location
+    const randomMoisture = Math.floor(Math.random() * 100);
+    setSoilMoisture(randomMoisture);
+    alert(`Showing crops for Lat: ${latitude}, Lon: ${longitude}`);
   };
 
-  // Function to get the user's current location
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation(`Lat: ${latitude}, Lon: ${longitude}`); // Set the location state
+          setLatitude(latitude.toFixed(4)); // Set the latitude
+          setLongitude(longitude.toFixed(4)); // Set the longitude
         },
         (error) => {
-          console.log(error); // Log any error
+          console.log(error);
           alert("Unable to fetch location. Please try again.");
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
@@ -50,10 +86,9 @@ export default function TabTwoScreen() {
   };
 
   const selectCrop = (crop: Crop) => {
-    setSelectedCrop(crop); // Update the selected crop state
+    setSelectedCrop(crop);
   };
 
-  // Prepare data for the graph
   const graphData = {
     labels: crops.map(crop => crop.name),
     datasets: [
@@ -69,75 +104,81 @@ export default function TabTwoScreen() {
       <RNView style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Enter your area"
-          value={location}
-          onChangeText={setLocation} // Update the location state as user types
+          placeholder="Enter Latitude"
+          value={latitude}
+          onChangeText={setLatitude}
+          keyboardType="numeric" // Only numeric input for latitude
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Longitude"
+          value={longitude}
+          onChangeText={setLongitude}
+          keyboardType="numeric" // Only numeric input for longitude
         />
         <TouchableOpacity style={styles.iconButton} onPress={getCurrentLocation}>
-          <Icon name="location-arrow" size={20} color="white" /> {/* Location icon */}
+          <Icon name="location-arrow" size={20} color="white" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={fetchSoilMoisture}>
-          <Icon name="search" size={20} color="white" /> {/* Search icon */}
+          <Icon name="search" size={20} color="white" />
         </TouchableOpacity>
       </RNView>
 
       {/* Square section for crops list on the left */}
       <RNView style={styles.squaresContainer}>
-        {/* Left tab: Crops list */}
         <RNView style={styles.leftSquare}>
           <FlatList
             data={crops}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }: { item: Crop }) => ( // Specify the type for item
+            renderItem={({ item }: { item: Crop }) => (
               <TouchableOpacity onPress={() => selectCrop(item)}>
                 <Text style={styles.cropItem}>{item.name}</Text>
               </TouchableOpacity>
             )}
+            scrollEnabled={true} // Enables scrolling
           />
         </RNView>
 
         {/* Right tab: Graph section */}
         <RNView style={styles.rightSquare}>
           <RNView style={styles.graphContainer}>
-          <BarChart
-  data={graphData}
-  width={Dimensions.get('window').width * 0.4 - 20} // Adjust width to fit within padding
-  height={220}
-  yAxisLabel="%"
-  chartConfig={{
-    backgroundColor: '#e9f7ef',
-    backgroundGradientFrom: '#e9f7ef',
-    backgroundGradientTo: '#c8e6c9',
-    decimalPlaces: 0, // For percentages
-    color: (opacity = 1) => `rgba(46, 125, 50, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: "#ffa726",
-    },
-  }}
-  style={{
-    marginVertical: 8,
-    borderRadius: 16,
-    // Optionally, add marginHorizontal for extra spacing
-    marginHorizontal: 10, // Add some horizontal margin if needed
-  }}
-/>
+            <BarChart
+              data={graphData}
+              width={Dimensions.get('window').width * 0.4 - 20}
+              height={220}
+              yAxisLabel="%"
+              chartConfig={{
+                backgroundColor: '#e9f7ef',
+                backgroundGradientFrom: '#e9f7ef',
+                backgroundGradientTo: '#c8e6c9',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(46, 125, 50, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                style: {
+                  borderRadius: 16,
+                },
+                propsForDots: {
+                  r: "6",
+                  strokeWidth: "2",
+                  stroke: "#ffa726",
+                },
+              }}
+              style={{
+                marginVertical: 8,
+                borderRadius: 16,
+                marginHorizontal: 10,
+              }}
+            />
           </RNView>
         </RNView>
       </RNView>
 
       {/* Rectangular area below the squares */}
       <RNView style={styles.rectangularTab}>
-        {/* Display soil moisture data and crop details */}
         {soilMoisture !== null && (
           <RNView style={styles.moistureBlock}>
             <Text style={styles.moistureText}>
-              Soil Moisture: {soilMoisture}% in {location}
+              Soil Moisture: {soilMoisture}% in Lat: {latitude}, Lon: {longitude}
             </Text>
             <View style={styles.barContainer}>
               <View style={[styles.bar, { width: `${soilMoisture}%` }]} />
@@ -148,7 +189,12 @@ export default function TabTwoScreen() {
           <RNView style={styles.detailsBlock}>
             <Text style={styles.detailsTitle}>{selectedCrop.name} Details</Text>
             <Text style={styles.detailsText}>
-              This crop is suitable for {location}. Ideal soil: Loamy.
+              This crop is suitable for Lat: {latitude}, Lon: {longitude}. Ideal soil: {soilDetails[selectedCrop.name].type}.
+            </Text>
+            <Text style={styles.soilDetailText}>
+              Moisture: {soilDetails[selectedCrop.name].moisture}%{'\n'}
+              pH: {soilDetails[selectedCrop.name].pH}{'\n'}
+              Nutrients: {soilDetails[selectedCrop.name].nutrients}
             </Text>
           </RNView>
         )}
@@ -157,12 +203,11 @@ export default function TabTwoScreen() {
   );
 }
 
-// Define your styles here
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#e9f7ef', // Light green background
+    backgroundColor: '#e9f7ef',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -173,14 +218,14 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 40,
-    borderColor: '#a5d6a7', // Soft green border for the input
+    borderColor: '#a5d6a7',
     borderWidth: 1,
     padding: 10,
     marginRight: 10,
-    backgroundColor: '#f1f8e9', // Light green background for input field
+    backgroundColor: '#f1f8e9',
   },
   iconButton: {
-    backgroundColor: '#66bb6a', // Green button background
+    backgroundColor: '#66bb6a',
     padding: 10,
     borderRadius: 5,
     marginLeft: 10,
@@ -193,42 +238,31 @@ const styles = StyleSheet.create({
   },
   leftSquare: {
     flex: 1,
-    backgroundColor: '#a5d6a7', // Light green for the left square
+    backgroundColor: '#a5d6a7',
     marginRight: 10,
     padding: 10,
     borderRadius: 10,
-    justifyContent: 'center',
+    justifyContent: 'center', // Limit height to ensure it doesn't overflow
+    overflow: 'hidden', // Hide overflow
   },
   rightSquare: {
     flex: 1,
-    backgroundColor: '#c8e6c9', // Slightly different green for the right square
+    backgroundColor: '#c8e6c9',
     marginLeft: 10,
     padding: 10,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden', // Prevent overflow
+    overflow: 'hidden',
   },
   graphContainer: {
-    width: '100%', // Set to 100% to fit within the square
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyBox: {
     width: '100%',
-    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#dcedc8', // Lighter green for empty box
-    borderRadius: 10,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#388e3c', // Darker green for the text
   },
   rectangularTab: {
     flex: 1,
-    backgroundColor: '#f1f8e9', // Very light green for rectangular tab background
+    backgroundColor: '#f1f8e9',
     padding: 20,
     borderRadius: 10,
     shadowColor: '#000',
@@ -241,26 +275,26 @@ const styles = StyleSheet.create({
   moistureText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#388e3c', // Dark green text for moisture info
+    color: '#388e3c',
   },
   barContainer: {
     height: 20,
-    backgroundColor: '#c8e6c9', // Light green for the progress bar container
+    backgroundColor: '#c8e6c9',
     borderRadius: 5,
     marginTop: 10,
   },
   bar: {
     height: '100%',
-    backgroundColor: '#2e7d32', // Darker green for the progress bar
+    backgroundColor: '#2e7d32',
     borderRadius: 5,
   },
   cropItem: {
     padding: 10,
     fontSize: 18,
-    backgroundColor: '#81c784', // Medium green for crop items
+    backgroundColor: '#81c784',
     marginVertical: 5,
     textAlign: 'center',
-    color: 'white', // White text for contrast
+    color: 'white',
   },
   detailsBlock: {
     marginTop: 20,
@@ -268,11 +302,19 @@ const styles = StyleSheet.create({
   detailsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#388e3c', // Dark green for crop details title
+    color: '#388e3c',
     marginBottom: 10,
   },
   detailsText: {
     fontSize: 16,
-    color: '#4caf50', // Green for crop details text
+    color: '#4caf50',
+  },
+  soilDetailText: {
+    fontSize: 14,
+    color: '#4caf50',
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#dcedc8', // Light green background for soil details
+    borderRadius: 8,
   },
 });
