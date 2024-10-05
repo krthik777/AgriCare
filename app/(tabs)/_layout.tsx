@@ -72,7 +72,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="five"
         options={{
-          title: 'Tab Five',
+          title: 'Agri-Chat',
           tabBarIcon: ({ color }) => <TabBarIcon name="wechat" color={color} />,
         }}
       />
