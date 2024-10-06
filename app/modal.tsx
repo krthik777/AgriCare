@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { Platform, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -93,19 +93,58 @@ export default function ModalScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground
+      source={require('./images/chatbg.jpg')} // Replace with your background image URL
+      style={styles.container}
+    >
       <TouchableOpacity style={styles.backButton} onPress={handleBack}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
 
       <Text style={styles.title}>User Profile</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Username:</Text>
-        <Text style={styles.value}>{username || 'No username found'}</Text>
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
+        <View style={styles.profileInfo}>
+          <Image source={{ uri: 'https://via.placeholder.com/80' }} style={styles.profileImg} />
+          <View style={styles.profileDetails}>
+            <Text style={styles.profileName}>{username || 'No username found'}</Text>
+            <Text style={styles.profileSubtitle}>Farmer | Remote</Text>
+          </View>
+        </View>
+        <View>
+          <Text style={styles.dateText}>Date: Sun, Oct 06, 2024</Text>
+        </View>
+      </View>
 
-        <Text style={styles.label}>Location:</Text>
-        <Text style={styles.value}>{city}</Text>
+      {/* Main Content */}
+      <View style={styles.main}>
+        {/* Left Section */}
+        <View style={styles.section}>
+          <View style={styles.location}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.sectionContent}>{city}</Text>
+          </View>
+          <View style={styles.connect}>
+            <Text style={styles.sectionTitle}>Connect</Text>
+            <Text style={styles.sectionContent}>Phone: 9495677838 <Text style={styles.editText}>Edit</Text></Text>
+            <Text style={styles.sectionContent}>Email: farmuser1@gmail.com <Text style={styles.editText}>Edit</Text></Text>
+          </View>
+        </View>
+
+        {/* Right Section */}
+        <View style={styles.section}>
+          <View style={styles.socials}>
+            <Text style={styles.sectionTitle}>Socials</Text>
+            <View style={styles.socialIcons}>
+              <Image source={require('./images/facebook.jpg')} style={styles.socialIcon} />
+              <Image source={require('./images/whatsapp.jpg')} style={styles.socialIcon} />
+            </View>
+            <TouchableOpacity style={styles.addAccountBtn}>
+              <Text style={styles.addAccountBtnText}>Add Account</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -113,16 +152,18 @@ export default function ModalScreen() {
       </TouchableOpacity>
 
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Align items at the start
     padding: 20,
-    backgroundColor: '#F4F4F4',
+    height: '100%',
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Optional: Add a white overlay for readability
   },
   backButton: {
     position: 'absolute',
@@ -140,41 +181,114 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     color: '#333',
   },
-  card: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
-    marginBottom: 30,
+  profileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+    paddingBottom: 20,
   },
-  label: {
-    fontSize: 18,
-    fontWeight: '600',
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImg: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    marginRight: 20,
+  },
+  profileDetails: {
+    flexDirection: 'column',
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  profileSubtitle: {
+    fontSize: 14,
+    color: '#555',
+  },
+  dateText: {
+    color: '#999',
+  },
+  main: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    
+  },
+  section: {
+    width: '48%',
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    fontSize: 16, // Optional: increase font size for section title
+  },
+  sectionContent: {
+    fontSize: 14,
     color: '#333',
     marginBottom: 10,
   },
-  value: {
-    fontSize: 16,
-    color: '#555',
+  editText: {
+    fontSize: 12,
+    color: '#28A745',
+  },
+  location: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EEE',
+  },
+  connect: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#EEE',
+  },
+  socials: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#EEE',
+  },
+  socialIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  socialIcon: {
+    width: 40,
+    height: 40,
+  },
+  addAccountBtn: {
+    backgroundColor: '#28A745',
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  addAccountBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   logoutButton: {
-    backgroundColor: '#FF3B30',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: '#FF5733',
+    borderRadius: 5,
+    padding: 15,
+    marginTop: 20,
     alignItems: 'center',
   },
   logoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
+
