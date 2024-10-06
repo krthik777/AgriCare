@@ -57,14 +57,23 @@ export default function TabTwoScreen() {
   { id: 12, name: 'Potato', successRate: 79 },
   { id: 13, name: 'Tomato', successRate: 83 },
   { id: 14, name: 'Carrot', successRate: 74 },
-  { id: 15, name: 'Onion', successRate: 78 }
+  { id: 15, name: 'Onion', successRate: 72 }
   ];
 
   const fetchSoilMoisture = () => {
-    const randomMoisture = Math.floor(Math.random() * 100);
+    let randomMoisture;
+    
+    // 70% chance to get a number between 10 and 20
+    if (Math.random() < 0.7) {
+      randomMoisture = Math.floor(Math.random() * 11) + 10; // Generates a number between 10 and 20
+    } else {
+      randomMoisture = Math.floor(Math.random() * 49) + 20; // Generates a number between 20 and 68
+    }
+  
     setSoilMoisture(randomMoisture);
     alert(`Showing crops for Lat: ${latitude}, Lon: ${longitude}`);
   };
+  
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -264,7 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f1f8e9',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 25,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
   bar: {
     height: '100%',
     backgroundColor: '#2e7d32',
-    borderRadius: 5,
+    borderRadius: 10,
   },
   cropItem: {
     padding: 10,
