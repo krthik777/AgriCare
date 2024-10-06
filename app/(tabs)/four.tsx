@@ -1,92 +1,84 @@
-import React, { useState } from "react";
-import { StyleSheet, ScrollView, View, TouchableOpacity } from "react-native";
-import { Text } from "@/components/Themed";
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  ScrollView,
+  View,
+  TouchableOpacity,
+  Modal,
+  Text,
+} from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Menu, Provider, DefaultTheme } from "react-native-paper";
+import * as Location from "expo-location";
 
 const { colors: defaultColors } = DefaultTheme;
 const screenWidth = Dimensions.get("window").width;
 
 // Simulated data for flood risk over different durations (7 days, 2 weeks, 3 weeks)
-const floodRiskData: {
-  [key: string]: {
-    labels: string[];
-    datasets: {
-      data: number[];
-      color: (opacity?: number) => string;
-      strokeWidth: number;
-    }[];
-  };
-} = {
+const floodRiskData: { [key: string]: any } = {
   "7 days": {
-    labels: ["Today", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"],
+    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
       {
-        data: [20, 30, 60, 90, 70, 50, 30], // Flood risk for 7 days
-        color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
-        strokeWidth: 3,
+        data: [20, 45, 28, 80, 99, 43, 67],
       },
     ],
   },
   "2 weeks": {
     labels: [
-      "Today",
-      "Day 2",
-      "Day 3",
-      "Day 4",
-      "Day 5",
-      "Day 6",
-      "Day 7",
-      "Day 8",
-      "Day 9",
-      "Day 10",
-      "Day 11",
-      "Day 12",
-      "Day 13",
-      "Day 14",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
     ],
     datasets: [
       {
-        data: [20, 30, 60, 90, 70, 50, 30, 40, 60, 80, 70, 50, 40, 20], // Flood risk for 2 weeks
-        color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
-        strokeWidth: 3,
+        data: [20, 45, 28, 80, 99, 43, 67, 55, 78, 35, 90, 60, 50, 70],
       },
     ],
   },
   "3 weeks": {
     labels: [
-      "Today",
-      "Day 2",
-      "Day 3",
-      "Day 4",
-      "Day 5",
-      "Day 6",
-      "Day 7",
-      "Day 8",
-      "Day 9",
-      "Day 10",
-      "Day 11",
-      "Day 12",
-      "Day 13",
-      "Day 14",
-      "Day 15",
-      "Day 16",
-      "Day 17",
-      "Day 18",
-      "Day 19",
-      "Day 20",
-      "Day 21",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
     ],
     datasets: [
       {
         data: [
-          20, 30, 60, 90, 70, 50, 30, 40, 60, 80, 70, 50, 40, 20, 30, 40, 50,
-          60, 70, 60, 40,
-        ], // Flood risk for 3 weeks
-        color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
-        strokeWidth: 3,
+          20, 45, 28, 80, 99, 43, 67, 55, 78, 35, 90, 60, 50, 70, 40, 80, 60,
+          85, 40, 70, 100,
+        ],
       },
     ],
   },
@@ -94,21 +86,65 @@ const floodRiskData: {
 
 // Determine color based on severity
 const getColorBySeverity = (risk: number) => {
-  if (risk > 70) return "rgba(255, 0, 0, 1)"; // Red for high risk
-  if (risk > 30) return "rgba(255, 165, 0, 1)"; // Orange for medium risk
-  return "rgba(0, 255, 0, 1)"; // Green for low risk
+  if (risk > 70) return "rgba(255, 0, 0, 1)";
+  if (risk > 30) return "rgba(255, 165, 0, 1)";
+  return "rgba(0, 255, 0, 1)";
 };
 
 export default function WeatherAlertsScreen() {
   const [visible, setVisible] = useState(false);
-  const [selectedDays, setSelectedDays] = useState("7 days"); // Default is 7 days
+  const [selectedDays, setSelectedDays] = useState("7 days");
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [locationData, setLocationData] = useState<{
+    Key: string;
+    LocalizedName: string;
+  } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [weatherModalVisible, setWeatherModalVisible] = useState(false);
+  const [weatherData, setWeatherData] = useState<any>(null);
 
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
 
-  // Current dataset based on selected duration (7 days, 2 weeks, 3 weeks)
+  // Get user's location on component mount
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let locationData = await Location.getCurrentPositionAsync({});
+      setLocation({
+        latitude: locationData.coords.latitude,
+        longitude: locationData.coords.longitude,
+      });
+
+      // Fetch location data from AccuWeather API
+      const apiKey = "JywUDSEUc8Csv397eeyxL0kuPbrP6SG2";
+      const url = `http://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=${apiKey}&q=${locationData.coords.latitude},${locationData.coords.longitude}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      setLocationData(data);
+    })();
+  }, []);
+
   const currentData = floodRiskData[selectedDays];
-  const highestRiskDay = Math.max(...currentData.datasets[0].data); // Find the most severe day
+
+  const fetchWeatherData = async () => {
+    const apiKey = "JywUDSEUc8Csv397eeyxL0kuPbrP6SG2";
+    const url = locationData
+      ? `http://dataservice.accuweather.com/forecasts/v1/daily/5day/${locationData.Key}?apikey=${apiKey}`
+      : "";
+    const response = await fetch(url);
+    const data = await response.json();
+    setWeatherData(data);
+    setWeatherModalVisible(true);
+  };
 
   return (
     <Provider>
@@ -153,6 +189,26 @@ export default function WeatherAlertsScreen() {
               />
             </Menu>
           </View>
+          <TouchableOpacity
+            onPress={fetchWeatherData}
+            style={styles.weatherButton}
+          >
+            <Text style={styles.weatherButtonText}>Current Weather</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Display user's location */}
+        <View style={styles.locationContainer}>
+          {location && locationData ? (
+            <Text style={styles.locationText}>
+              Latitude: {location.latitude}, Longitude: {location.longitude},
+              Location: {locationData.LocalizedName} ({locationData.Key})
+            </Text>
+          ) : (
+            <Text style={styles.locationText}>
+              {errorMsg ? errorMsg : "Getting location..."}
+            </Text>
+          )}
         </View>
 
         {/* Risk Level Chart */}
@@ -178,9 +234,9 @@ export default function WeatherAlertsScreen() {
 
         {/* Alerts for Each Day */}
         <View style={styles.alertsContainer}>
-          {currentData.labels.map((label, index) => {
+          {currentData.labels.map((label: string, index: number) => {
             const risk = currentData.datasets[0].data[index];
-            const riskColor = getColorBySeverity(risk); // Get color based on risk
+            const riskColor = getColorBySeverity(risk);
 
             return (
               <View
@@ -218,7 +274,6 @@ export default function WeatherAlertsScreen() {
           })}
         </View>
 
-        {/* General Information Section */}
         <Text style={styles.info}>
           This chart shows the upcoming risk of flooding over the next{" "}
           {selectedDays}. Please take necessary precautions if the risk level is
@@ -228,6 +283,77 @@ export default function WeatherAlertsScreen() {
           If the risk exceeds 70%, take action to protect your crops
           immediately!
         </Text>
+
+        {/* Weather Forecast Modal */}
+        <Modal
+          visible={weatherModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setWeatherModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Weather Forecast</Text>
+              {weatherData ? (
+                <ScrollView>
+                  {weatherData.DailyForecasts.map(
+                    (forecast: any, index: number) => (
+                      <View key={index} style={styles.forecastCard}>
+                        {/* Date */}
+                        <Text style={styles.forecastDate}>
+                          {new Date(forecast.Date).toLocaleDateString("en-US", {
+                            weekday: "long",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </Text>
+
+                        {/* Temperature and Conditions */}
+                        <View style={styles.forecastRow}>
+                          <View style={styles.tempInfo}>
+                            <Text style={styles.temperatureText}>
+                              {forecast.Temperature.Maximum.Value}°
+                              {forecast.Temperature.Maximum.Unit}
+                            </Text>
+                            <Text style={styles.subTemperatureText}>Max</Text>
+                          </View>
+
+                          <View style={styles.tempInfo}>
+                            <Text style={styles.temperatureText}>
+                              {forecast.Temperature.Minimum.Value}°
+                              {forecast.Temperature.Minimum.Unit}
+                            </Text>
+                            <Text style={styles.subTemperatureText}>Min</Text>
+                          </View>
+
+                          {/* Weather Icon */}
+                          <View style={styles.weatherIconWrapper}>
+                            <MaterialIcons
+                              name="wb-sunny"
+                              size={36}
+                              color="#FFA500"
+                            />
+                            <Text style={styles.weatherCondition}>
+                              {forecast.Day.IconPhrase}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    )
+                  )}
+                </ScrollView>
+              ) : (
+                <Text>Loading...</Text>
+              )}
+              <TouchableOpacity
+                onPress={() => setWeatherModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </Provider>
   );
@@ -236,8 +362,8 @@ export default function WeatherAlertsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    padding: 10,
+    backgroundColor: "#e9f7ef", // Light Mint Green
+    padding: 16,
   },
   header: {
     flexDirection: "row",
@@ -246,98 +372,173 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#333",
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#388e3c", // Dark Green
   },
   menuWrapper: {
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
   },
   menuButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 4,
+    padding: 8,
+    backgroundColor: "#f1f8e9", // Pale Green
+    borderRadius: 8,
   },
   menuButtonText: {
     fontSize: 16,
-    color: "#333",
-    marginRight: 4,
+    color: "#4caf50", // Bright Green
+  },
+  weatherButton: {
+    backgroundColor: "#66bb6a", // Medium Green
+    padding: 8,
+    borderRadius: 8,
+  },
+  weatherButtonText: {
+    color: "#ffffff", // White
+    fontSize: 16,
+  },
+  locationContainer: {
+    marginBottom: 20,
+  },
+  locationText: {
+    fontSize: 14,
+    color: "#666", // Retained for neutral contrast
   },
   chartContainer: {
     alignItems: "center",
     marginBottom: 20,
-    backgroundColor: "#1E2923",
-    borderRadius: 16,
-    padding: 10,
   },
   chart: {
     borderRadius: 16,
   },
   alertsContainer: {
-    marginTop: 10,
+    marginBottom: 20,
   },
   alertBox: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
+    padding: 12,
     borderWidth: 2,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderColor: "#c8e6c9", // Soft Green for the border
   },
   alertContent: {
-    flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   alertDay: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: "bold",
+    color: "#388e3c", // Dark Green
   },
   riskLevel: {
     fontSize: 14,
-    color: "#666",
+    color: "#666", // Retained for neutral contrast
   },
   actionContainer: {
     flex: 1,
-    alignItems: "flex-end",
+    justifyContent: "flex-end",
   },
   highRiskText: {
-    color: "#FF0000",
-    fontWeight: "bold",
+    color: "#c8e6c9", // Soft Green to indicate a less intense warning
   },
   mediumRiskText: {
-    color: "#FFA500",
-    fontWeight: "bold",
+    color: "#66bb6a", // Medium Green for a moderate warning
   },
   lowRiskText: {
-    color: "#00FF00",
-    fontWeight: "bold",
+    color: "#2e7d32", // Darker Green for a positive indication
   },
   info: {
-    marginTop: 20,
-    fontSize: 16,
-    textAlign: "center",
-    color: "#555",
+    fontSize: 14,
+    color: "#666", // Retained for neutral contrast
+    marginBottom: 8,
   },
   warning: {
-    marginTop: 10,
     fontSize: 16,
-    textAlign: "center",
+    color: "#388e3c", // Dark Green for warnings
     fontWeight: "bold",
-    color: "#FF0000",
+    marginBottom: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#ffffff", // White for modal background
+    padding: 20,
+    borderRadius: 16,
+    width: "85%",
+    maxHeight: "80%",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#388e3c", // Dark Green
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  forecastCard: {
+    backgroundColor: "#f9f9f9", // Retained for a neutral card background
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  forecastDate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#388e3c", // Dark Green
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  forecastRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  tempInfo: {
+    alignItems: "center",
+  },
+  temperatureText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#388e3c", // Dark Green
+  },
+  subTemperatureText: {
+    fontSize: 14,
+    color: "#888", // Retained for neutral contrast
+  },
+  weatherIconWrapper: {
+    alignItems: "center",
+  },
+  weatherCondition: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#388e3c", // Dark Green
+    marginTop: 4,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "#66bb6a", // Medium Green for the close button
+    padding: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#ffffff", // White
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
