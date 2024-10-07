@@ -1,6 +1,4 @@
-<h1>AgriCare:</h1>
-</br>
-<h3>A farming assistance application </h3>
+
 <h1>AgiCare</h1>
   <p><strong>A comprehensive web app solution tailored for farmers, developed during a hackathon.</strong></p>
 
