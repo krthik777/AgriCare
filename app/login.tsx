@@ -19,7 +19,6 @@ export default function LoginScreen() {
         console.log('Logging in with', username, password);
         await AsyncStorage.getItem(username);
         await AsyncStorage.getItem( password);
-        alert('Successs! Login successful!'+username+password);
         router.replace('/one'); // Redirect to home screen
       } catch (e) {
         console.error('Failed to save user credentials', e);
