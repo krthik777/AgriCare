@@ -1,3 +1,3 @@
 <h1>AgriCare:</h1>
 </br>
-<h3>A farming assistance application helllooooo</h3>
+<h3>A farming assistance application </h3>
