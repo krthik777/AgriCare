@@ -277,20 +277,24 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
+    overflow: 'hidden', 
   },
   moistureBlock: {
     marginBottom: 20,
+    flexShrink: 1, 
   },
   moistureText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#388e3c',
+    flexWrap: 'wrap', 
   },
   barContainer: {
     height: 20,
     backgroundColor: '#c8e6c9',
     borderRadius: 5,
     marginTop: 10,
+    overflow: 'hidden',
   },
   bar: {
     height: '100%',
@@ -307,6 +311,7 @@ const styles = StyleSheet.create({
   },
   detailsBlock: {
     marginTop: 20,
+    
   },
   detailsTitle: {
     fontSize: 18,
@@ -317,6 +322,7 @@ const styles = StyleSheet.create({
   detailsText: {
     fontSize: 16,
     color: '#4caf50',
+    
   },
   soilDetailText: {
     fontSize: 14,
@@ -325,5 +331,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#dcedc8', // Light green background for soil details
     borderRadius: 8,
+    
   },
 });
